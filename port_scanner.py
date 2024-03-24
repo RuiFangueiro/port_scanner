@@ -5,15 +5,22 @@ from common_ports import ports_and_services
 
 def get_open_ports(target: Union[int, str], port_range: List[int], verbose = False):
     open_ports = []
-    ip = "" 
+    ip = ""
+    ip_given = False 
     original_target = target
+    resolved_hostname = ""
 
     if isinstance(target, int):
         target = socket.inet_ntoa(target.to_bytes(4, 'big'))
         ip_given = True
     elif isinstance(target, str):
         if re.match(r'^\d+\.\d+\.\d+\.\d+$', target):
+            ip = socket.gethostbyname(target)
             ip_given = True
+            try:
+                resolved_hostname = socket.gethostbyaddr(ip)[0]
+            except socket.herror:
+                resolved_hostname = ""
             try:
                 socket.inet_aton(target)
             except socket.error:
@@ -39,14 +46,16 @@ def get_open_ports(target: Union[int, str], port_range: List[int], verbose = Fal
             s.close()
 
     if verbose:
-        if ip_given:
+        if ip_given and resolved_hostname:
+            verbose_output = f"Open ports for {resolved_hostname} ({ip})\nPORT     SERVICE"
+        elif ip_given:
             verbose_output = f"Open ports for {ip}\nPORT     SERVICE"
         else:
-            verbose_output = f"Open ports for {original_target} ({ip})\nPORT"
+            verbose_output = f"Open ports for {original_target} ({ip})\nPORT     SERVICE"
        
         for port in open_ports:
             service_name = ports_and_services.get(port, 'unknown')
-            verbose_output += f"\n{port}    {service_name}"
+            verbose_output += f"\n{port:<9}{service_name}"
         return verbose_output
 
 
