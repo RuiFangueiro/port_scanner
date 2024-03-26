@@ -15,19 +15,25 @@ def get_open_ports(target: Union[int, str], port_range: List[int], verbose = Fal
         ip_given = True
     elif isinstance(target, str):
         if re.match(r'^\d+\.\d+\.\d+\.\d+$', target):
-            ip = socket.gethostbyname(target)
-            ip_given = True
             try:
-                resolved_hostname = socket.gethostbyaddr(ip)[0]
-            except socket.herror:
-                resolved_hostname = ""
-            try:
-                socket.inet_aton(target)
+                ip = socket.gethostbyname(target)
+                ip_given = True
+                try:
+                    resolved_hostnames = socket.gethostbyaddr(ip)[0]
+                    if isinstance(resolved_hostnames, list):
+                        resolved_hostname = resolved_hostnames[0]
+                    else:
+                        resolved_hostname = resolved_hostnames
+                except socket.herror:
+                        resolved_hostname = ""
             except socket.error:
                 return f"Error: Invalid IP address"
         elif re.match(r'^[a-zA-Z.-]+$', target):
-            ip_given = False
-            ip = socket.gethostbyname(target)
+            try:
+                ip_given = False
+                ip = socket.gethostbyname(target)
+            except:
+                ip= ""
             try:
                 socket.gethostbyname(target)
             except socket.gaierror:
